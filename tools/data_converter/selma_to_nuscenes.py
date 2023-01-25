@@ -265,30 +265,70 @@ def create_sample_annotation(dest_path, folders):
     sample_annotation_list = []
     for fold in tqdm.tqdm(folders):
         town_name = fold.split("/")[-1].split("_")[0]
+        rootdir = fold
+        sensor = 'LIDAR_TOP'
+        with open(os.path.join(rootdir, 'calibrated_sensor.json'), 'r') as f:
+            sensors = json.load(f)
+        snames = [s['sensor_name'] for s in sensors]
+        sidx = snames.index(sensor)
+        sdata = sensors[sidx]
+
+        with open(os.path.join(rootdir, 'waypoints.json'), 'r') as f:
+            waypoints = json.load(f)
+
         for lab in glob.glob(fold + "/BBOX_LABELS/*.json"):
+            # FROM SELMA CONVERTER #
+            fname = lab.split('/')[-1].split('.')[0]
+
+            pc_path = os.path.join(rootdir, sensor, fname+'.ply')
+            data = PlyData.read(pc_path)
+            instances = np.array([i for _,_,_,i,_ in data['vertex']])
+
+            wdata = waypoints[fname.split('_')[-1]]
+            with open(os.path.join(rootdir, 'BBOX_LABELS', fname+'.json'), 'r') as f:
+                bboxes = json.load(f)
+
+            t = project_boxes(bboxes, wdata, sdata, None, sensor="lidar")
+
+            label_txt = ''
+            pt_threshold = 5
+            distance_threshold = 60
+            # FROM SELMA CONVERTER #
+
             token_stamp = lab.split("/")[-1].split(".")[0]
             sample_token = token_stamp + "_SELMA"
             with open(lab, "r") as f:
                 data = json.load(f)
             for obj in data:
+                close_obj = False
+                for bb in t:
+                    if str(bb[-3]) == obj["instance_id"]:
+                        if (np.sqrt(bb[0][0]**2 + bb[0][1]**2) < distance_threshold) and (np.sum(instances==bb[-3])>pt_threshold):
+                            close_obj = True
                 quat = euler_to_quaternion(obj['rotation'])
                 loc_xyz = []
                 ext_xyz = []
                 for axis in ["x", "y", "z"]:
                     loc_xyz.append(obj["location"][axis])
                     ext_xyz.append(obj["extent"][axis])
-                sample_annotation_list.append({"token": token_stamp + "_instance_" + obj["instance_id"] + "_SELMA",
-                                                "sample_token": sample_token,
-                                                "instance_token": town_name + "_" + obj["instance_id"],
-                                                "visibility_token": "4",
-                                                "attribute_tokens": "",
-                                                "translation": loc_xyz,
-                                                "size": ext_xyz,
-                                                "rotation": quat,
-                                                "prev": "",
-                                                "next": "",
-                                                "num_lidar_pts": 5,
-                                                "num_radar_pts": 0})
+                #invert ext x with y
+                ext_xyz[0], ext_xyz[1] = ext_xyz[1], ext_xyz[0]
+                # multiply ext by 2
+                ext_xyz = [2*ext for ext in ext_xyz]
+                if close_obj:
+                    sample_annotation_list.append({"token": token_stamp + "_instance_" + obj["instance_id"] + "_SELMA",
+                                                    "sample_token": sample_token,
+                                                    "instance_token": town_name + "_" + obj["instance_id"],
+                                                    "visibility_token": "4",
+                                                    "attribute_tokens": "",
+                                                    "translation": loc_xyz,
+                                                    "size": ext_xyz,
+                                                    "rotation": quat,
+                                                    "prev": "",
+                                                    "next": "",
+                                                    "num_lidar_pts": 5,
+                                                    "num_radar_pts": 0})
+
     # save the new sample_annotation.json
     with open(dest_path + "/sample_annotation.json", "w") as f:
         json.dump(sample_annotation_list, f)
@@ -391,27 +431,27 @@ def main():
     folders = fol
     folders = folders[0:5] # for testing
 
-    create_calibrated_sensor(dest_path, folders)
+    # create_calibrated_sensor(dest_path, folders)
 
-    create_ego_pose(dest_path, folders)
+    # create_ego_pose(dest_path, folders)
 
-    create_instance(dest_path, folders)
+    # create_instance(dest_path, folders)
 
-    create_log(dest_path, folders)
+    # create_log(dest_path, folders)
 
-    create_scene(dest_path, folders)
+    # create_scene(dest_path, folders)
 
-    create_sensors(dest_path, folders)
+    # create_sensors(dest_path, folders)
 
-    create_sample(dest_path, folders)
+    # create_sample(dest_path, folders)
 
-    create_sample_data(dest_path, folders)
+    # create_sample_data(dest_path, folders)
 
     create_sample_annotation(dest_path, folders)
 
-    get_lidars(sample_dest_path, folders)
+    # get_lidars(sample_dest_path, folders)
 
-    get_cameras(sample_dest_path, folders)
+    # get_cameras(sample_dest_path, folders)
 
     #test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
 
