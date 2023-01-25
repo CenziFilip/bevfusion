@@ -1,5 +1,6 @@
 dataset_type: NuScenesDataset
-dataset_root: data/nuscenes/
+#dataset_root: data/nuscenes/
+dataset_root: /hdd/SCANLAB_public/catoad_datasets/data/selma_into_nuscenes/
 gt_paste_stop_epoch: -1
 reduce_beams: 32
 load_dim: 5

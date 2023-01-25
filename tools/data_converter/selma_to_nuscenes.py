@@ -4,7 +4,6 @@ import json
 import argparse
 import glob
 import tqdm
-import open3d as o3d
 from plyfile import PlyData, PlyElement
 import shutil
 import math
@@ -180,13 +179,15 @@ def create_scene(dest_path, folders):
         envir = town_envir.split("_")[-1]
         # count files in the folder
         num_files = len(glob.glob(fold + "/BBOX_LABELS/*.json"))
+        bbox_list = glob.glob(fold + "/BBOX_LABELS/*.json")
         scene_list.append({"token": town_envir + "_SELMA",
                            "log_token": town_place + "_SELMA",
                             "nbr_samples": num_files,
-                            "first_sample_token": "",
-                            "last_sample_token": "",
+                            "first_sample_token": bbox_list[0].split("/")[-1].split(".")[0] + "_SELMA",
+                            "last_sample_token": bbox_list[-1].split("/")[-1].split(".")[0] + "_SELMA",
                             "name": town_envir,
                             "description": envir})
+    print(scene_list)
     # save the new scene.json
     with open(dest_path + "/scene.json", "w") as f:
         json.dump(scene_list, f)
@@ -212,14 +213,26 @@ def create_sample(dest_path, folders):
     sample_list = []
     for fold in tqdm.tqdm(folders):
         town_envir = fold.split("/")[-1]
-        for lab in glob.glob(fold + "/BBOX_LABELS/*.json"):
+        bbox_list = glob.glob(fold + "/BBOX_LABELS/*.json")
+        next_token_sample = ''
+        prev_token_sample = ''
+        num_samples = len(bbox_list)
+        for sample_i, lab in zip(range(num_samples), bbox_list):
             timestamp = lab.split("/")[-1].split(".")[0].split("_")[-1]
             token_stamp = lab.split("/")[-1].split(".")[0]
-            sample_list.append({"token": token_stamp + "_SELMA",
+            token_sample = token_stamp + "_SELMA"
+            if sample_i != 0:
+                 prev_token_sample = bbox_list[sample_i-1].split("/")[-1].split(".")[0] + "_SELMA"
+            if sample_i != num_samples-1:
+                 next_token_sample = bbox_list[sample_i+1].split("/")[-1].split(".")[0] + "_SELMA"
+            else:
+                 next_token_sample = ""
+            sample_list.append({"token": token_sample,
                                 "timestamp": int(timestamp),
-                                "next": "",
-                                "prev": "",
+                                "next": next_token_sample,
+                                "prev": prev_token_sample,
                                 "scene_token": town_envir + "_SELMA"})
+    print(sample_list)
     # save the new sample.json
     with open(dest_path + "/sample.json", "w") as f:
         json.dump(sample_list, f)
@@ -404,17 +417,26 @@ def get_standard_files(dest_path, nuscences_v1mini_path):
     print("Creating standard files...")
     shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/attribute.json', dest_path + '/attribute.json')
     shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/category.json', dest_path + '/category.json')
-    shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/map.json', dest_path + '/map.json')
+    #shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/map.json', dest_path + '/map.json')
     shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/visibility.json', dest_path + '/visibility.json')
-    sweeps_dir = dest_path[:-4] + 'sweeps'
+    sweeps_dir = dest_path.split('v1')[0] + 'sweeps'
     if not os.path.exists(sweeps_dir):
         os.makedirs(sweeps_dir)
-    shutil.copytree(nuscences_v1mini_path + 'maps/', dest_path[:-4] + 'maps/')
+    shutil.copytree(nuscences_v1mini_path + 'maps/', dest_path.split('v1')[0] + 'maps/')
+
+    with open(nuscences_v1mini_path + 'v1.0-mini/map.json') as f:
+        map_data = json.load(f)
+    log_tok = map_data[0]['log_tokens']
+    log_tok.append('Town01_SELMA')
+    map_data[0]['log_tokens'] = log_tok
+
+    with open(dest_path + '/map.json', "w") as f:
+        json.dump(map_data, f)
 
 def main():
-    path = "/mnt/d/Filippo/Università/Magistrale/Tesi&Tirocinio/"
+    path = "/hdd/SCANLAB_public/catoad_datasets/"
     selma_path = path + "selma/selma/"
-    dest_path = path + "data/selma_into_nuscenes/v1.0"
+    dest_path = path + "data/selma_into_nuscenes/v1.0-mini"
     nuscences_v1mini_path = path + "data/nuscenes/"
     if not os.path.exists(dest_path):
         os.makedirs(dest_path)
@@ -431,31 +453,31 @@ def main():
     folders = fol
     folders = folders[0:5] # for testing
 
-    # create_calibrated_sensor(dest_path, folders)
+    create_calibrated_sensor(dest_path, folders)
 
-    # create_ego_pose(dest_path, folders)
+    create_ego_pose(dest_path, folders)
 
-    # create_instance(dest_path, folders)
+    create_instance(dest_path, folders)
 
-    # create_log(dest_path, folders)
+    create_log(dest_path, folders)
 
-    # create_scene(dest_path, folders)
+    create_scene(dest_path, folders)
 
-    # create_sensors(dest_path, folders)
+    create_sensors(dest_path, folders)
 
-    # create_sample(dest_path, folders)
+    create_sample(dest_path, folders)
 
-    # create_sample_data(dest_path, folders)
+    create_sample_data(dest_path, folders)
 
     create_sample_annotation(dest_path, folders)
 
-    # get_lidars(sample_dest_path, folders)
+    get_lidars(sample_dest_path, folders)
 
-    # get_cameras(sample_dest_path, folders)
+    get_cameras(sample_dest_path, folders)
 
     #test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
 
-    #get_standard_files(dest_path, nuscences_v1mini_path)
+    get_standard_files(dest_path, nuscences_v1mini_path)
 
 if __name__ == "__main__":
     main()
