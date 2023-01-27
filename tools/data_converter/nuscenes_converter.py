@@ -76,7 +76,9 @@ def create_nuscenes_infos(
     # filter existing scenes.
     available_scenes = get_available_scenes(nusc)
     available_scene_names = [s["name"] for s in available_scenes]
+    print(available_scene_names)
     train_scenes = list(filter(lambda x: x in available_scene_names, train_scenes))
+    print(train_scenes)
     val_scenes = list(filter(lambda x: x in available_scene_names, val_scenes))
     train_scenes = set(
         [

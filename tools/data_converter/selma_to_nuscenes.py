@@ -11,7 +11,7 @@ from transforms3d.euler import euler2quat, quat2euler
 from utils.bbox import project_boxes
 
 
-wanted_sensors = ["LIDAR_TOP", "CAM_FRONT", "CAM_FRONT_LEFT", "CAM_FRONT_RIGHT", "CAM_DESK"]
+wanted_sensors = ["LIDAR_TOP", "CAM_DESK"] #"CAM_FRONT_LEFT", "CAM_FRONT_RIGHT", "CAM_FRONT"]
 
 def euler_to_quaternion(r):
     # get r key from the dictionary
@@ -113,7 +113,7 @@ def create_instance(dest_path, folders):
     instances = []
     for fold in tqdm.tqdm(folders):
         town_name = fold.split("/")[-1].split("_")[0]
-        for lab in glob.glob(fold + "/BBOX_LABELS/*.json"):
+        for lab in tqdm.tqdm(glob.glob(fold + "/BBOX_LABELS/*.json")):
             with open(lab) as f:
                 data = json.load(f)
             for d in data:
@@ -123,7 +123,7 @@ def create_instance(dest_path, folders):
                 instances_for_count.append(instance_token)
     for fold in tqdm.tqdm(folders):
         town_name = fold.split("/")[-1].split("_")[0]
-        for lab in glob.glob(fold + "/BBOX_LABELS/*.json"):
+        for lab in tqdm.tqdm(glob.glob(fold + "/BBOX_LABELS/*.json")):
             with open(lab) as f:
                 data = json.load(f)
             for d in data:
@@ -187,11 +187,10 @@ def create_scene(dest_path, folders):
                             "last_sample_token": bbox_list[-1].split("/")[-1].split(".")[0] + "_SELMA",
                             "name": town_envir,
                             "description": envir})
-    print(scene_list)
     # save the new scene.json
     with open(dest_path + "/scene.json", "w") as f:
         json.dump(scene_list, f)
-        
+
 def create_sensors(dest_path, folders):
     print("Creating sensor files...")
     sensors_list = []
@@ -217,7 +216,7 @@ def create_sample(dest_path, folders):
         next_token_sample = ''
         prev_token_sample = ''
         num_samples = len(bbox_list)
-        for sample_i, lab in zip(range(num_samples), bbox_list):
+        for sample_i, lab in tqdm.tqdm(zip(range(num_samples), bbox_list)):
             timestamp = lab.split("/")[-1].split(".")[0].split("_")[-1]
             token_stamp = lab.split("/")[-1].split(".")[0]
             token_sample = token_stamp + "_SELMA"
@@ -232,7 +231,6 @@ def create_sample(dest_path, folders):
                                 "next": next_token_sample,
                                 "prev": prev_token_sample,
                                 "scene_token": town_envir + "_SELMA"})
-    print(sample_list)
     # save the new sample.json
     with open(dest_path + "/sample.json", "w") as f:
         json.dump(sample_list, f)
@@ -289,7 +287,7 @@ def create_sample_annotation(dest_path, folders):
         with open(os.path.join(rootdir, 'waypoints.json'), 'r') as f:
             waypoints = json.load(f)
 
-        for lab in glob.glob(fold + "/BBOX_LABELS/*.json"):
+        for lab in tqdm.tqdm(glob.glob(fold + "/BBOX_LABELS/*.json")):
             # FROM SELMA CONVERTER #
             fname = lab.split('/')[-1].split('.')[0]
 
@@ -298,7 +296,7 @@ def create_sample_annotation(dest_path, folders):
             instances = np.array([i for _,_,_,i,_ in data['vertex']])
 
             wdata = waypoints[fname.split('_')[-1]]
-            with open(os.path.join(rootdir, 'BBOX_LABELS', fname+'.json'), 'r') as f:
+            with open(lab, 'r') as f:
                 bboxes = json.load(f)
 
             t = project_boxes(bboxes, wdata, sdata, None, sensor="lidar")
@@ -375,7 +373,7 @@ def get_lidars(sample_dest_path, folders):
                 if not os.path.exists(final_dest):
                     os.makedirs(final_dest)
                 lidar_files = glob.glob(fold + '/' +  ws + "/*.ply")
-                for lidar_scan in lidar_files:
+                for lidar_scan in tqdm.tqdm(lidar_files):
                     file_name = lidar_scan.split("/")[-1].split(".")[0]
                     # get the ply file
                     points = PlyData.read(lidar_scan)
@@ -393,25 +391,13 @@ def get_cameras(sample_dest_path, folders):
     print("Creating camera files...")
     for fold in tqdm.tqdm(folders):
         for ws in wanted_sensors:
-            if ws == "CAM_DESK":
-                final_dest = sample_dest_path + ws + '/'
-                if not os.path.exists(final_dest):
-                    os.makedirs(final_dest)
-                cam_files = glob.glob(fold + '/' +  ws + "/*.jpg")
-                for cam in cam_files:
-                    file_name = cam.split("/")[-1].split(".")[0]
-                    shutil.copyfile(cam, final_dest + file_name + ".jpg")
-    test_path = '/mnt/d/Filippo/Downloads/selma_download_linux/CV/dataset/'
-    for fold in tqdm.tqdm(glob.glob(test_path + "*")): #tqdm.tqdm(folders):
-        for ws in wanted_sensors:
-            if ws.split("_")[0] == "CAM" and ws.split("_")[1] != "DESK":
-                final_dest = sample_dest_path + ws + '/'
-                if not os.path.exists(final_dest):
-                    os.makedirs(final_dest)
-                cam_files = glob.glob(fold + '/' +  ws + "/*.jpg")
-                for cam in cam_files:
-                    file_name = cam.split("/")[-1].split(".")[0]
-                    shutil.copyfile(cam, final_dest + file_name + ".jpg")
+            final_dest = sample_dest_path + ws + '/'
+            if not os.path.exists(final_dest):
+                os.makedirs(final_dest)
+            cam_files = glob.glob(fold + '/' +  ws + "/*.jpg")
+            for cam in cam_files:
+                file_name = cam.split("/")[-1].split(".")[0]
+                shutil.copyfile(cam, final_dest + file_name + ".jpg")
 
 def get_standard_files(dest_path, nuscences_v1mini_path):
     print("Creating standard files...")
@@ -435,7 +421,7 @@ def get_standard_files(dest_path, nuscences_v1mini_path):
 
 def main():
     path = "/hdd/SCANLAB_public/catoad_datasets/"
-    selma_path = path + "selma/selma/"
+    selma_path = "/hdd/SCANLAB_public/SELMA/bev_fusion_data/CV/dataset/"
     dest_path = path + "data/selma_into_nuscenes/v1.0-mini"
     nuscences_v1mini_path = path + "data/nuscenes/"
     if not os.path.exists(dest_path):
@@ -448,7 +434,7 @@ def main():
     folders = glob.glob(selma_path + "*")
     fol = []
     for fld in folders:
-        if int(fld.split("/")[-1][4:6]) <= num_of_towns and fld.split("/")[-1] == "Town01_Opt_ClearSunset": # for testing
+        if int(fld.split("/")[-1][4:6]) <= num_of_towns: # and fld.split("/")[-1] == "Town01_Opt_ClearSunset": # for testing
             fol.append(fld)
     folders = fol
     folders = folders[0:5] # for testing
