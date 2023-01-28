@@ -286,24 +286,24 @@ class LoadBEVSegmentation:
             layer_names.extend(mappings[name])
         layer_names = list(set(layer_names))
 
-        location = data["location"]
-        masks = self.maps[location].get_map_mask(
-            patch_box=patch_box,
-            patch_angle=patch_angle,
-            layer_names=layer_names,
-            canvas_size=self.canvas_size,
-        )
+#        location = data["location"]
+#        masks = self.maps[location].get_map_mask(
+#            patch_box=patch_box,
+#            patch_angle=patch_angle,
+#            layer_names=layer_names,
+#            canvas_size=self.canvas_size,
+#        )
         # masks = masks[:, ::-1, :].copy()
-        masks = masks.transpose(0, 2, 1)
-        masks = masks.astype(np.bool)
+#        masks = masks.transpose(0, 2, 1)
+#        masks = masks.astype(np.bool)
 
-        num_classes = len(self.classes)
-        labels = np.zeros((num_classes, *self.canvas_size), dtype=np.long)
-        for k, name in enumerate(self.classes):
-            for layer_name in mappings[name]:
-                index = layer_names.index(layer_name)
-                labels[k, masks[index]] = 1
-
+#        num_classes = len(self.classes)
+#        labels = np.zeros((num_classes, *self.canvas_size), dtype=np.long)
+#        for k, name in enumerate(self.classes):
+#            for layer_name in mappings[name]:
+#                index = layer_names.index(layer_name)
+#                labels[k, masks[index]] = 1
+        labels = []
         data["gt_masks_bev"] = labels
         return data
 

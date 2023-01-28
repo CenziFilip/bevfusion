@@ -165,7 +165,7 @@ def create_log(dest_path, folders):
                          "logfile": "logfile",
                          "vehicle": "SelmaCar",
                          "date_captured": "2020-01-01",
-                         "location": to})
+                         "location": to + "_SELMA"})
     # save the new log.json
     with open(dest_path + "/log.json", "w") as f:
         json.dump(log_list, f)
@@ -413,7 +413,9 @@ def get_standard_files(dest_path, nuscences_v1mini_path):
     with open(nuscences_v1mini_path + 'v1.0-mini/map.json') as f:
         map_data = json.load(f)
     log_tok = map_data[0]['log_tokens']
-    log_tok.append('Town01_SELMA')
+    town_available = ['01', '02', '03', '04', '05', '06', '07', '10']
+    for ta in town_available:
+        log_tok.append('Town'+ ta +'_SELMA')
     map_data[0]['log_tokens'] = log_tok
 
     with open(dest_path + '/map.json', "w") as f:
@@ -430,14 +432,14 @@ def main():
     if not os.path.exists(sample_dest_path):
         os.makedirs(sample_dest_path)
 
-    num_of_towns = 1
+    num_of_towns = 10
     folders = glob.glob(selma_path + "*")
     fol = []
     for fld in folders:
         if int(fld.split("/")[-1][4:6]) <= num_of_towns: # and fld.split("/")[-1] == "Town01_Opt_ClearSunset": # for testing
             fol.append(fld)
     folders = fol
-    folders = folders[0:5] # for testing
+    #folders = folders[0:5] # for testing
 
     create_calibrated_sensor(dest_path, folders)
 

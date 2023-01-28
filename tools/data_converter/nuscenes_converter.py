@@ -213,14 +213,14 @@ def _fill_trainval_infos(nusc, train_scenes, val_scenes, test=False, max_sweeps=
         e2g_r_mat = Quaternion(e2g_r).rotation_matrix
 
         # obtain 6 image's information per frame
-        camera_types = [
-            "CAM_FRONT",
-            "CAM_FRONT_RIGHT",
-            "CAM_FRONT_LEFT",
-            "CAM_BACK",
-            "CAM_BACK_LEFT",
-            "CAM_BACK_RIGHT",
-        ]
+        camera_types = ["CAM_DESK"]
+#            "CAM_FRONT",
+#            "CAM_FRONT_RIGHT",
+#            "CAM_FRONT_LEFT",
+#            "CAM_BACK",
+#            "CAM_BACK_LEFT",
+#            "CAM_BACK_RIGHT",
+#        ]
         for cam in camera_types:
             cam_token = sample["data"][cam]
             cam_path, _, camera_intrinsics = nusc.get_sample_data(cam_token)
@@ -364,14 +364,14 @@ def export_2d_annotation(root_path, info_path, version, mono3d=True):
         mono3d (bool): Whether to export mono3d annotation. Default: True.
     """
     # get bbox annotations for camera
-    camera_types = [
-        "CAM_FRONT",
-        "CAM_FRONT_RIGHT",
-        "CAM_FRONT_LEFT",
-        "CAM_BACK",
-        "CAM_BACK_LEFT",
-        "CAM_BACK_RIGHT",
-    ]
+    camera_types = ["CAM_DESK"]
+#        "CAM_FRONT",
+#        "CAM_FRONT_RIGHT",
+#        "CAM_FRONT_LEFT",
+#        "CAM_BACK",
+#        "CAM_BACK_LEFT",
+#        "CAM_BACK_RIGHT",
+#    ]
     nusc_infos = mmcv.load(info_path)["infos"]
     nusc = NuScenes(version=version, dataroot=root_path, verbose=True)
     # info_2d_list = []
