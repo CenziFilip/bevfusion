@@ -170,22 +170,21 @@ def create_log(dest_path, folders):
     with open(dest_path + "/log.json", "w") as f:
         json.dump(log_list, f)
 
-def create_scene(dest_path, folders):
+def create_scene(dest_path, folders, imageset):
     print("Creating scene files...")
     scene_list = []
-    for fold in tqdm.tqdm(folders):
-        town_envir = fold.split("/")[-1]
-        town_place = town_envir.split("_")[0]
-        envir = town_envir.split("_")[-1]
+    for scene in tqdm.tqdm(imageset):
+        town_place = scene['Location'].split("_")[0]
+        envir = scene['Location'].split("_")[-1]
         # count files in the folder
-        num_files = len(glob.glob(fold + "/BBOX_LABELS/*.json"))
-        bbox_list = glob.glob(fold + "/BBOX_LABELS/*.json")
-        scene_list.append({"token": town_envir + "_SELMA",
+        num_files = len(scene['files'])
+        bbox_list = scene['files']
+        scene_list.append({"token": scene['Scene'],
                            "log_token": town_place + "_SELMA",
                             "nbr_samples": num_files,
-                            "first_sample_token": bbox_list[0].split("/")[-1].split(".")[0] + "_SELMA",
-                            "last_sample_token": bbox_list[-1].split("/")[-1].split(".")[0] + "_SELMA",
-                            "name": town_envir,
+                            "first_sample_token": bbox_list[0] + "_SELMA",
+                            "last_sample_token": bbox_list[-1] + "_SELMA",
+                            "name": scene['Scene'],
                             "description": envir})
     # save the new scene.json
     with open(dest_path + "/scene.json", "w") as f:
@@ -207,30 +206,29 @@ def create_sensors(dest_path, folders):
     with open(dest_path + "/sensor.json", "w") as f:
         json.dump(sensors_list, f)
 
-def create_sample(dest_path, folders):
+def create_sample(dest_path, folders, imageset):
     print("Creating sample files...")
     sample_list = []
-    for fold in tqdm.tqdm(folders):
-        town_envir = fold.split("/")[-1]
-        bbox_list = glob.glob(fold + "/BBOX_LABELS/*.json")
+    for scene in tqdm.tqdm(imageset):
+        bbox_list = scene['files']
         next_token_sample = ''
         prev_token_sample = ''
         num_samples = len(bbox_list)
-        for sample_i, lab in tqdm.tqdm(zip(range(num_samples), bbox_list)):
+        for sample_i, lab in zip(range(num_samples), bbox_list):
             timestamp = lab.split("/")[-1].split(".")[0].split("_")[-1]
             token_stamp = lab.split("/")[-1].split(".")[0]
             token_sample = token_stamp + "_SELMA"
             if sample_i != 0:
-                 prev_token_sample = bbox_list[sample_i-1].split("/")[-1].split(".")[0] + "_SELMA"
+                 prev_token_sample = bbox_list[sample_i-1] + "_SELMA"
             if sample_i != num_samples-1:
-                 next_token_sample = bbox_list[sample_i+1].split("/")[-1].split(".")[0] + "_SELMA"
+                 next_token_sample = bbox_list[sample_i+1] + "_SELMA"
             else:
                  next_token_sample = ""
             sample_list.append({"token": token_sample,
                                 "timestamp": int(timestamp),
                                 "next": next_token_sample,
                                 "prev": prev_token_sample,
-                                "scene_token": town_envir + "_SELMA"})
+                                "scene_token": scene['Scene']})
     # save the new sample.json
     with open(dest_path + "/sample.json", "w") as f:
         json.dump(sample_list, f)
@@ -421,9 +419,51 @@ def get_standard_files(dest_path, nuscences_v1mini_path):
     with open(dest_path + '/map.json', "w") as f:
         json.dump(map_data, f)
 
+def create_imagesets(dest_path, folders):
+    sample_per_scene = 100
+    scene_numbers = np.arange(1, len(folders)*100)
+    scene_numbers = [str(x).zfill(4) for x in scene_numbers]
+
+    all_scene_json = []
+    i = 0
+    for fold in folders:
+        location = fold.split('/')[-1]
+        lab_files = []
+        lab_list = glob.glob(fold + '/BBOX_LABELS/*.json')
+        num_lab = len(lab_list)
+        for ind, lab in enumerate(lab_list):
+            lab_name = lab.split('/')[-1].split('.')[0]
+            lab_files.append(lab_name)
+            if (i % sample_per_scene == 0 and i != 0) or (ind == num_lab - 1):
+                scene_json = {"Scene": scene, "Location": location, "files": lab_files}
+                all_scene_json.append(scene_json)
+                if ind == num_lab - 1:
+                    i = i + sample_per_scene - len(lab_files)
+
+                lab_files = []
+
+            scene = "Scene" + scene_numbers[int(i/sample_per_scene)]
+            i += 1
+    # save the json file
+    with open(dest_path + '/imagesets.json', "w") as f:
+        json.dump(all_scene_json, f)
+
+def arg_parse():
+    parser = argparse.ArgumentParser(description='SELMA to nuscenes converter')
+
+    parser.add_argument("--path", dest = 'path', help =
+                        "Path to the SELMA dataset",
+                        default = "/hdd/SCANLAB_public/SELMA/bev_fusion_data/CV/dataset/", type = str)
+    parser.add_argument("--dest", dest = 'dest', help =
+                        "Path to the destination folder",
+                        default = "/hdd/SCANLAB_public/catoad_datasets/", type = str)
+    return parser.parse_args()
+
 def main():
-    path = "/hdd/SCANLAB_public/catoad_datasets/"
-    selma_path = "/hdd/SCANLAB_public/SELMA/bev_fusion_data/CV/dataset/"
+    args = arg_parse()
+
+    selma_path = args.path
+    path = args.dest
     dest_path = path + "data/selma_into_nuscenes/v1.0-mini"
     nuscences_v1mini_path = path + "data/nuscenes/"
     if not os.path.exists(dest_path):
@@ -432,14 +472,24 @@ def main():
     if not os.path.exists(sample_dest_path):
         os.makedirs(sample_dest_path)
 
-    num_of_towns = 10
+    num_of_towns = 1
     folders = glob.glob(selma_path + "*")
     fol = []
     for fld in folders:
-        if int(fld.split("/")[-1][4:6]) <= num_of_towns: # and fld.split("/")[-1] == "Town01_Opt_ClearSunset": # for testing
+        try:
+            town_num = int(fld.split("/")[-1][4:6])
+        except:
+            town_num = 11
+        if town_num <= num_of_towns: # and fld.split("/")[-1] == "Town01_Opt_ClearSunset": # for testing
             fol.append(fld)
     folders = fol
-    #folders = folders[0:5] # for testing
+    folders = folders[0:3] # for testing
+
+    create_imagesets(selma_path, folders)
+
+    # load the imagesets.json file
+    with open(selma_path + '/imagesets.json') as f:
+        imageset = json.load(f)
 
     create_calibrated_sensor(dest_path, folders)
 
@@ -449,11 +499,11 @@ def main():
 
     create_log(dest_path, folders)
 
-    create_scene(dest_path, folders)
+    create_scene(dest_path, folders, imageset)
 
     create_sensors(dest_path, folders)
 
-    create_sample(dest_path, folders)
+    create_sample(dest_path, folders, imageset)
 
     create_sample_data(dest_path, folders)
 
