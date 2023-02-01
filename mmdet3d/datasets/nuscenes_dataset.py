@@ -425,7 +425,7 @@ class NuScenesDataset(Custom3DDataset):
         from nuscenes.eval.detection.evaluate import DetectionEval
 
         output_dir = osp.join(*osp.split(result_path)[:-1])
-        nusc = NuScenes(version=self.version, dataroot=self.dataset_root, verbose=False)
+        nusc = NuScenes(version=self.version, dataroot=self.dataset_root, verbose=True)
         eval_set_map = {
             "v1.0-mini": "mini_val",
             "v1.0-trainval": "val",
@@ -436,7 +436,7 @@ class NuScenesDataset(Custom3DDataset):
             result_path=result_path,
             eval_set=eval_set_map[self.version],
             output_dir=output_dir,
-            verbose=False,
+            verbose=True,
         )
         nusc_eval.main(render_curves=False)
 

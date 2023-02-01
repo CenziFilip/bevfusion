@@ -9,7 +9,7 @@ import shutil
 import math
 from transforms3d.euler import euler2quat, quat2euler
 from utils.bbox import project_boxes
-
+from nuscenes.utils import splits
 
 wanted_sensors = ["LIDAR_TOP", "CAM_DESK"] #"CAM_FRONT_LEFT", "CAM_FRONT_RIGHT", "CAM_FRONT"]
 
@@ -121,6 +121,7 @@ def create_instance(dest_path, folders):
                 if instance_token not in instance_list:
                     instance_list.append(instance_token)
                 instances_for_count.append(instance_token)
+
     for fold in tqdm.tqdm(folders):
         town_name = fold.split("/")[-1].split("_")[0]
         for lab in tqdm.tqdm(glob.glob(fold + "/BBOX_LABELS/*.json")):
@@ -148,7 +149,6 @@ def create_instance(dest_path, folders):
                              "first_annotation_token": "",
                              "last_annotation_token": ""})
     # save the new instance.json
-
     with open(dest_path + "/instance.json", "w") as f:
         json.dump(instances_v2, f)
         
@@ -301,19 +301,21 @@ def create_sample_annotation(dest_path, folders):
 
             label_txt = ''
             pt_threshold = 5
-            distance_threshold = 60
+            distance_threshold = 54
             # FROM SELMA CONVERTER #
 
             token_stamp = lab.split("/")[-1].split(".")[0]
             sample_token = token_stamp + "_SELMA"
             with open(lab, "r") as f:
                 data = json.load(f)
+            obj_count = 0
             for obj in data:
                 close_obj = False
                 for bb in t:
                     if str(bb[-3]) == obj["instance_id"]:
                         if (np.sqrt(bb[0][0]**2 + bb[0][1]**2) < distance_threshold) and (np.sum(instances==bb[-3])>pt_threshold):
                             close_obj = True
+                            obj_count += 1
                 quat = euler_to_quaternion(obj['rotation'])
                 loc_xyz = []
                 ext_xyz = []
@@ -324,7 +326,9 @@ def create_sample_annotation(dest_path, folders):
                 ext_xyz[0], ext_xyz[1] = ext_xyz[1], ext_xyz[0]
                 # multiply ext by 2
                 ext_xyz = [2*ext for ext in ext_xyz]
-                if close_obj:
+                if close_obj and ext_xyz[0] != 0 and ext_xyz[1] != 0 and ext_xyz[2] != 0:
+                    if(ext_xyz[0] == 0 or ext_xyz[1] == 0 or ext_xyz[2] == 0):
+                        print("SIZE EQUAL 0!!!!")
                     sample_annotation_list.append({"token": token_stamp + "_instance_" + obj["instance_id"] + "_SELMA",
                                                     "sample_token": sample_token,
                                                     "instance_token": town_name + "_" + obj["instance_id"],
@@ -420,10 +424,18 @@ def get_standard_files(dest_path, nuscences_v1mini_path):
         json.dump(map_data, f)
 
 def create_imagesets(dest_path, folders):
-    sample_per_scene = 100
-    scene_numbers = np.arange(1, len(folders)*100)
-    scene_numbers = [str(x).zfill(4) for x in scene_numbers]
+    #sample_per_scene = 100
+    scene_numbers = ['scene-0061', 'scene-0553', 'scene-0655', 'scene-0757', 'scene-0796', 'scene-1077', 'scene-1094', 'scene-1100', 'scene-0103', 'scene-0916']
+    train_scenes = splits.train
+    val_scenes = splits.val
+    #xscene_numbers = [*train_scenes,*val_scenes]
 
+    count_files = 0
+    for fold in folders:
+        count_files += len(glob.glob(fold + '/BBOX_LABELS/*.json'))
+
+    sample_per_scene = int(count_files/(len(scene_numbers))) + 1
+    print(sample_per_scene)
     all_scene_json = []
     i = 0
     for fold in folders:
@@ -437,13 +449,12 @@ def create_imagesets(dest_path, folders):
             if (i % sample_per_scene == 0 and i != 0) or (ind == num_lab - 1):
                 scene_json = {"Scene": scene, "Location": location, "files": lab_files}
                 all_scene_json.append(scene_json)
-                if ind == num_lab - 1:
-                    i = i + sample_per_scene - len(lab_files)
-
                 lab_files = []
 
-            scene = "Scene" + scene_numbers[int(i/sample_per_scene)]
+            scene = scene_numbers[int(i/sample_per_scene)]
             i += 1
+    if os.path.exists(dest_path + '/imagesets.json'):
+         os.remove(dest_path + '/imagesets.json')
     # save the json file
     with open(dest_path + '/imagesets.json', "w") as f:
         json.dump(all_scene_json, f)
@@ -513,7 +524,7 @@ def main():
 
     get_cameras(sample_dest_path, folders)
 
-    #test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
+#    test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
 
     get_standard_files(dest_path, nuscences_v1mini_path)
 
