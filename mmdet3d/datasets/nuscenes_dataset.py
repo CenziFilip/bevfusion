@@ -546,8 +546,8 @@ class NuScenesDataset(Custom3DDataset):
 
         metrics = {}
 
-        if "masks_bev" in results[0]:
-            metrics.update(self.evaluate_map(results))
+        #if "masks_bev" in results[0]:
+        #    metrics.update(self.evaluate_map(results))
 
         if "boxes_3d" in results[0]:
             result_files, tmp_dir = self.format_results(results, jsonfile_prefix)

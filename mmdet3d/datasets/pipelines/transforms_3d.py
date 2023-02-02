@@ -256,8 +256,8 @@ class RandomFlip3D:
                 data["points"].flip("horizontal")
             if "gt_bboxes_3d" in data:
                 data["gt_bboxes_3d"].flip("horizontal")
-            if "gt_masks_bev" in data:
-                data["gt_masks_bev"] = data["gt_masks_bev"][:, :, ::-1].copy()
+            #if "gt_masks_bev" in data:
+            #    data["gt_masks_bev"] = data["gt_masks_bev"][:, :, ::-1].copy()
 
         if flip_vertical:
             rotation = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]]) @ rotation
@@ -265,8 +265,8 @@ class RandomFlip3D:
                 data["points"].flip("vertical")
             if "gt_bboxes_3d" in data:
                 data["gt_bboxes_3d"].flip("vertical")
-            if "gt_masks_bev" in data:
-                data["gt_masks_bev"] = data["gt_masks_bev"][:, ::-1, :].copy()
+            #if "gt_masks_bev" in data:
+            #    data["gt_masks_bev"] = data["gt_masks_bev"][:, ::-1, :].copy()
 
         data["lidar_aug_matrix"][:3, :] = rotation @ data["lidar_aug_matrix"][:3, :]
         return data

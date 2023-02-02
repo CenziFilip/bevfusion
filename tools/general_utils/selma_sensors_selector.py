@@ -12,7 +12,7 @@ for d in data:
 	scenes.append(d['fullPath'].split('/')[4])
 unique_scenes = np.unique(scenes)
 
-sensors_to_add = ["CAM_DESK"]
+sensors_to_add = ["CAM_DESK", "CAM_LEFT", "CAM_RIGHT", "CAM_BACK"]
 data_copy = data.copy()
 data_to_add = []
 for us in unique_scenes:
@@ -39,11 +39,12 @@ for us in unique_scenes:
 final_data = []
 
 for dc in data_copy:
-	if 'LIDAR_FRONT_LEFT' not in dc['fullPath'] and 'LIDAR_FRONT_RIGHT' not in dc['fullPath']: #int(dc['fullPath'].split('/')[4][4:6]) == 1 and 
+	if 'LIDAR_FRONT_LEFT' not in dc['fullPath'] and 'LIDAR_FRONT_RIGHT' not in dc['fullPath'] and int(dc['fullPath'].split('/')[4][4:6]) == 1: 
 		final_data.append(dc)
 
 for dt in data_to_add:
-	final_data.append(dt)
+	if int(dt['fullPath'].split('/')[4][4:6]) == 1:
+		final_data.append(dt)
 
 data_v2 = []
 for d in final_data:
