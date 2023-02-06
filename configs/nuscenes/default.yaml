@@ -8,8 +8,8 @@ load_dim: 5
 use_dim: 5
 load_augmented: null
 
-#point_cloud_range: [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
-point_cloud_range: [0, -30.2, -5.0, 51.2, 30.2, 3.0]
+point_cloud_range: [-51.2, -51.2, -5.0, 51.2, 51.2, 3.0]
+#point_cloud_range: [0, -30.2, -5.0, 51.2, 30.2, 3.0]
 voxel_size: [0.1, 0.1, 0.2]
 image_size: [256, 704]
 
@@ -261,8 +261,8 @@ test_pipeline:
       - lidar_aug_matrix
 
 data:
-  samples_per_gpu: 4
-  workers_per_gpu: 4
+  samples_per_gpu: 1
+  workers_per_gpu: 1
   train:
     type: CBGSDataset
     dataset:

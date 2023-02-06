@@ -9,6 +9,9 @@ from mmcv.utils import build_from_cfg
 from numpy import random
 from PIL import Image
 
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 from mmdet3d.core import VoxelGenerator
 from mmdet3d.core.bbox import (
     CameraInstance3DBoxes,
@@ -20,6 +23,7 @@ from mmdet.datasets.builder import PIPELINES
 
 from ..builder import OBJECTSAMPLERS
 from .utils import noise_per_object_v3_
+
 
 
 @PIPELINES.register_module()

@@ -12,7 +12,7 @@ for d in data:
 	scenes.append(d['fullPath'].split('/')[4])
 unique_scenes = np.unique(scenes)
 
-sensors_to_add = ["CAM_DESK", "CAM_LEFT", "CAM_RIGHT", "CAM_BACK"]
+sensors_to_add = ["CAM_DESK", "CAM_LEFT", "CAM_RIGHT", "CAM_BACK", "CAM_FRONT"]
 data_copy = data.copy()
 data_to_add = []
 for us in unique_scenes:

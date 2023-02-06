@@ -24,7 +24,7 @@ model:
         nms_type: rotate
         pre_max_size: 1000
         post_max_size: 83
-        nms_thr: 0.2
+        nms_thr: 0.5
       tasks:
         - ["car"]
         - ["truck", "construction_vehicle"]

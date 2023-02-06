@@ -11,28 +11,19 @@ from transforms3d.euler import euler2quat, quat2euler
 from utils.bbox import project_boxes
 from nuscenes.utils import splits
 
-wanted_sensors = ["LIDAR_TOP", "CAM_DESK", "CAM_LEFT", "CAM_RIGHT", "CAM_BACK"] #"CAM_FRONT_LEFT", "CAM_FRONT_RIGHT", "CAM_FRONT"]
+wanted_sensors = ["LIDAR_TOP", "CAM_LEFT", "CAM_RIGHT", "CAM_BACK", "CAM_FRONT"] #"CAM_DESK", "CAM_FRONT_LEFT", "CAM_FRONT_RIGHT", "CAM_FRONT"]
 
-def euler_to_quaternion(r, s_name):
+def euler_to_quaternion(r):
     # get r key from the dictionary
     r_key = list(r.keys())
     yaw, pitch, roll = 0, 0, 0
-    if s_name == "CAM_BACK":
-        r_key.append('pitch')
     for r_k in r_key:
         if r_k == 'yaw':
-            if s_name == "CAM_BACK":
-                yaw = math.radians(r['yaw'])
-            else:
-                yaw = math.radians(r['yaw'])
+            yaw = math.radians(r['yaw'])
         elif r_k == 'pitch':
-            if s_name == "CAM_BACK":
-                 pitch = math.radians(0)
-            else:
-                 pitch = math.radians(r['pitch'])
+            pitch = math.radians(r['pitch'])
         elif r_k == 'roll':
             roll = math.radians(r['roll'])
-    print(yaw,pitch,roll)
     qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
     qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
     qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
@@ -62,15 +53,13 @@ def create_calibrated_sensor(dest_path, folders):
             data = json.load(f)
         for d in data:
             if d["sensor_name"] in wanted_sensors:
-                quat = euler_to_quaternion(d["rotation"], d['sensor_name'])
+                quat = euler_to_quaternion(d["rotation"])
                 new_d = {"token": str(d["sensor_name"]) + "_SELMA",
                          "sensor_token": d["sensor_name"],
                          "translation": d["translation"],
                          "rotation": quat,
                          "camera_intrinsic": d["camera_intrinsic"]}
                 sensors_stats.append(new_d)
-        for sest in sensors_stats:
-            print(sest)
         # save the new calibrated_sensor.json
         with open(dest_path + "/calibrated_sensor.json", "w") as f:
             json.dump(sensors_stats, f)
@@ -213,7 +202,6 @@ def create_sensors(dest_path, folders):
                              "channel": ws,
                              "modality": mod})
 
-    print(sensors_list)
     # save the new sensor.json
     with open(dest_path + "/sensor.json", "w") as f:
         json.dump(sensors_list, f)
@@ -516,29 +504,29 @@ def main():
 
     create_calibrated_sensor(dest_path, folders)
 
-#    create_ego_pose(dest_path, folders)
+    create_ego_pose(dest_path, folders)
 
-#    create_instance(dest_path, folders)
+    create_instance(dest_path, folders)
 
-#    create_log(dest_path, folders)
+    create_log(dest_path, folders)
 
-#    create_scene(dest_path, folders, imageset)
+    create_scene(dest_path, folders, imageset)
 
     create_sensors(dest_path, folders)
 
-#    create_sample(dest_path, folders, imageset)
+    create_sample(dest_path, folders, imageset)
 
-#    create_sample_data(dest_path, folders)
+    create_sample_data(dest_path, folders)
 
-#    create_sample_annotation(dest_path, folders)
+    create_sample_annotation(dest_path, folders)
 
-#    get_lidars(sample_dest_path, folders)
+    get_lidars(sample_dest_path, folders)
 
-#    get_cameras(sample_dest_path, folders)
+    get_cameras(sample_dest_path, folders)
 
-#    test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
+    test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
 
-#    get_standard_files(dest_path, nuscences_v1mini_path)
+    get_standard_files(dest_path, nuscences_v1mini_path)
 
 if __name__ == "__main__":
     main()

@@ -213,7 +213,7 @@ def _fill_trainval_infos(nusc, train_scenes, val_scenes, test=False, max_sweeps=
         e2g_r_mat = Quaternion(e2g_r).rotation_matrix
 
         # obtain 6 image's information per frame
-        camera_types = ["CAM_DESK"]
+        camera_types = ["CAM_FRONT", "CAM_BACK", "CAM_RIGHT", "CAM_LEFT"]
 #            "CAM_FRONT",
 #            "CAM_FRONT_RIGHT",
 #            "CAM_FRONT_LEFT",
@@ -364,7 +364,7 @@ def export_2d_annotation(root_path, info_path, version, mono3d=True):
         mono3d (bool): Whether to export mono3d annotation. Default: True.
     """
     # get bbox annotations for camera
-    camera_types = ["CAM_DESK"]
+    camera_types = ["CAM_FRONT", "CAM_BACK", "CAM_RIGHT", "CAM_LEFT"]
 #        "CAM_FRONT",
 #        "CAM_FRONT_RIGHT",
 #        "CAM_FRONT_LEFT",
