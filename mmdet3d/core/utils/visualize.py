@@ -143,12 +143,13 @@ def visualize_lidar(
         coords = bboxes.corners[:, [0, 3, 7, 4, 0], :2]
         for index in range(coords.shape[0]):
             name = classes[labels[index]]
-            plt.plot(
-                coords[index, :, 0],
-                coords[index, :, 1],
-                linewidth=thickness,
-                color=np.array(color or OBJECT_PALETTE[name]) / 255,
-            )
+            if name == 'car' or name == 'pedestrian':
+                plt.plot(
+                    coords[index, :, 0],
+                    coords[index, :, 1],
+                    linewidth=thickness,
+                    color=np.array(color or OBJECT_PALETTE[name]) / 255,
+                )
 
     mmcv.mkdir_or_exist(os.path.dirname(fpath))
     fig.savefig(

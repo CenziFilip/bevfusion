@@ -131,14 +131,25 @@ def main() -> None:
         else:
             masks = None
 
+        bboxes2 = []
+        labels2 = []
+        for box, score, lab in zip(bboxes, scores, labels):
+            if score > 0.5:
+                bboxes2.append(box.numpy())
+                labels2.append(lab)
+        bboxes2 = np.array(bboxes2)
+        bboxes2 = LiDARInstance3DBoxes(bboxes2, box_dim=9)
+
+        labels2 = np.array(labels2)
+
         if "img" in data:
             for k, image_path in enumerate(metas["filename"]):
                 image = mmcv.imread(image_path)
                 visualize_camera(
                     os.path.join(args.out_dir, f"camera-{k}", f"{name}.png"),
                     image,
-                    bboxes=bboxes,
-                    labels=labels,
+                    bboxes=bboxes2,
+                    labels=labels2,
                     transform=metas["lidar2image"][k],
                     classes=cfg.object_classes,
                 )
@@ -148,8 +159,8 @@ def main() -> None:
             visualize_lidar(
                 os.path.join(args.out_dir, "lidar", f"{name}.png"),
                 lidar,
-                bboxes=bboxes,
-                labels=labels,
+                bboxes=bboxes2,
+                labels=labels2,
                 xlim=[cfg.point_cloud_range[d] for d in [0, 3]],
                 ylim=[cfg.point_cloud_range[d] for d in [1, 4]],
                 classes=cfg.object_classes,
