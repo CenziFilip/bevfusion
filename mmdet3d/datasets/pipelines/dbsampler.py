@@ -179,9 +179,10 @@ class DataBaseSampler:
         Returns:
             dict: Info of database after filtering.
         """
+        admitted_names = ["car","pedestrian"]
         for name, min_num in min_gt_points_dict.items():
             min_num = int(min_num)
-            if min_num > 0:
+            if min_num > 0 and (name in admitted_names):
                 filtered_infos = []
                 for info in db_infos[name]:
                     if info["num_points_in_gt"] >= min_num:
@@ -225,8 +226,9 @@ class DataBaseSampler:
         sampled_gt_bboxes = []
         avoid_coll_boxes = gt_bboxes
 
+        admitted_names = ["car","pedestrian"]
         for class_name, sampled_num in zip(self.sample_classes, sample_num_per_class):
-            if sampled_num > 0:
+            if sampled_num > 0 and (class_name in admitted_names):
                 sampled_cls = self.sample_class_v2(
                     class_name, sampled_num, avoid_coll_boxes
                 )
