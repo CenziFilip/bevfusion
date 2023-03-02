@@ -39,7 +39,8 @@ for us in unique_scenes:
 final_data = []
 
 for dc in data_copy:
-	if 'LIDAR_FRONT_LEFT' not in dc['fullPath'] and 'LIDAR_FRONT_RIGHT' not in dc['fullPath'] and int(dc['fullPath'].split('/')[4][4:6]) == 1: 
+	#if 'LIDAR_FRONT_LEFT' not in dc['fullPath'] and 'LIDAR_FRONT_RIGHT' not in dc['fullPath'] and int(dc['fullPath'].split('/')[4][4:6]) == 1: 
+	if int(dc['fullPath'].split('/')[4][4:6]) == 1:
 		final_data.append(dc)
 
 for dt in data_to_add:

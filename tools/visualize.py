@@ -134,7 +134,7 @@ def main() -> None:
         bboxes2 = []
         labels2 = []
         for box, score, lab in zip(bboxes, scores, labels):
-            if score > 0.5:
+            if score > 0.3:
                 bboxes2.append(box.numpy())
                 labels2.append(lab)
         bboxes2 = np.array(bboxes2)
