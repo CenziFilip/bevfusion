@@ -14,7 +14,7 @@ lidar_top = "LIDAR_TOP"
 main_sensor = "LIDAR_TOP_ORIGINAL"
 sensors = ["LIDAR_FRONT_RIGHT","LIDAR_FRONT_LEFT"]
 
-num_of_lidars = 3
+num_of_lidars = 1
 
 for tp in town_path:
 	try:

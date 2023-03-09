@@ -13,7 +13,7 @@ from mmdet.datasets import DATASETS
 
 from ..core.bbox import LiDARInstance3DBoxes
 from .custom_3d import Custom3DDataset
-
+from .eval_iou_bev import _evaluate_single_v2
 
 @DATASETS.register_module()
 class NuScenesDataset(Custom3DDataset):
@@ -556,9 +556,11 @@ class NuScenesDataset(Custom3DDataset):
                 for name in result_names:
                     print("Evaluating bboxes of {}".format(name))
                     ret_dict = self._evaluate_single(result_files[name])
+                    _evaluate_single_v2(result_files[name], self.version, self.dataset_root)
                 metrics.update(ret_dict)
             elif isinstance(result_files, str):
                 metrics.update(self._evaluate_single(result_files))
+                _evaluate_single_v2(result_files, self.version, self.dataset_root, self.eval_detection_configs)
 
             if tmp_dir is not None:
                 tmp_dir.cleanup()
