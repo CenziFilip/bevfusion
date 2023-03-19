@@ -13,8 +13,10 @@ from transforms3d.euler import euler2quat, quat2euler
 
 from .iou_3D_python import get_3d_box, box3d_iou
 
+from sklearn.metrics import average_precision_score
+
 class_names = ["car", "pedestrian"]
-iou_th = {"car":0.6, "pedestrian":0.4}
+iou_th = {"car":0.5, "pedestrian":0.4}
 
 def get_coordinates(box):
 	_,_,yaw = quat2euler(box.rotation)
@@ -82,6 +84,9 @@ def accumulate_v2(gt_boxes, pred_boxes, class_name, iou_thresh):
 	conf, tp, fp = map(list, zip(*sorted(zip(conf, tp, fp), reverse=True)))
 #	print(conf, tp, fp)
 
+	ap3 = average_precision_score(tp, conf)
+	print(ap3)
+
 	# Accumulate.
 	tp = np.cumsum(tp).astype(float)
 	fp = np.cumsum(fp).astype(float)
@@ -113,8 +118,14 @@ def _evaluate_single_v2(result_path, nusc_version, nusc_data_root, detection_con
 	pred_boxes = add_center_dist(nusc, pred_boxes)
 	gt_boxes = add_center_dist(nusc, gt_boxes)
 
-	pred_boxes = filter_eval_boxes(nusc, pred_boxes, detection_config.class_range, verbose=verbose)
-	gt_boxes = filter_eval_boxes(nusc, gt_boxes, detection_config.class_range, verbose=verbose)
+	class_range = detection_config.class_range
+	print(class_range)
+
+	class_range["pedestrian"] = 50
+	print(class_range)
+
+	pred_boxes = filter_eval_boxes(nusc, pred_boxes, class_range, verbose=verbose)
+	gt_boxes = filter_eval_boxes(nusc, gt_boxes, class_range, verbose=verbose)
 
 	sample_tokens = gt_boxes.sample_tokens
 
