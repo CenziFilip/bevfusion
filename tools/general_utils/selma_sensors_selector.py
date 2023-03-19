@@ -4,7 +4,8 @@ import glob
 import shutil
 import json
 
-script_path = '/hdd/SCANLAB_public/SELMA/bev_fusion_data'
+#script_path = '/hdd/SCANLAB_public/SELMA/bev_fusion_data'
+script_path = '/hdd/SCANLAB/data/bevfusion/bevf/download_SELMA'
 with open(script_path + "/dataset_original.json") as f:
 	data = json.load(f)
 scenes = []

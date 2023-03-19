@@ -405,12 +405,13 @@ def get_standard_files(dest_path, nuscences_v1mini_path):
     print("Creating standard files...")
     shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/attribute.json', dest_path + '/attribute.json')
     shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/category.json', dest_path + '/category.json')
-    #shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/map.json', dest_path + '/map.json')
+    shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/map.json', dest_path + '/map.json')
     shutil.copyfile(nuscences_v1mini_path + 'v1.0-mini/visibility.json', dest_path + '/visibility.json')
     sweeps_dir = dest_path.split('v1')[0] + 'sweeps'
     if not os.path.exists(sweeps_dir):
         os.makedirs(sweeps_dir)
-    shutil.copytree(nuscences_v1mini_path + 'maps/', dest_path.split('v1')[0] + 'maps/')
+    if not os.path.exists(dest_path.split('v1')[0] + 'maps/'):
+        shutil.copytree(nuscences_v1mini_path + 'maps/', dest_path.split('v1')[0] + 'maps/')
 
     with open(nuscences_v1mini_path + 'v1.0-mini/map.json') as f:
         map_data = json.load(f)
@@ -464,10 +465,12 @@ def arg_parse():
 
     parser.add_argument("--path", dest = 'path', help =
                         "Path to the SELMA dataset",
-                        default = "/hdd/SCANLAB_public/SELMA/bev_fusion_data/CV/dataset/", type = str)
+                        default = "/hdd/SCANLAB/data/bevfusion/bevf/download_SELMA/CV/dataset/", type = str)
+                        #default = "/hdd/SCANLAB_public/SELMA/bev_fusion_data/CV/dataset/", type = str)
     parser.add_argument("--dest", dest = 'dest', help =
                         "Path to the destination folder",
-                        default = "/hdd/SCANLAB_public/catoad_datasets/", type = str)
+                        default = "/hdd/SCANLAB/data/bevfusion/", type = str)
+                        #default = "/hdd/SCANLAB_public/catoad_datasets/", type = str)
     return parser.parse_args()
 
 def main():
@@ -502,29 +505,29 @@ def main():
     with open(selma_path + '/imagesets.json') as f:
         imageset = json.load(f)
 
-    create_calibrated_sensor(dest_path, folders)
+#    create_calibrated_sensor(dest_path, folders)
 
-    create_ego_pose(dest_path, folders)
+#    create_ego_pose(dest_path, folders)
 
-    create_instance(dest_path, folders)
+#    create_instance(dest_path, folders)
 
-    create_log(dest_path, folders)
+#    create_log(dest_path, folders)
 
-    create_scene(dest_path, folders, imageset)
+#    create_scene(dest_path, folders, imageset)
 
-    create_sensors(dest_path, folders)
+#    create_sensors(dest_path, folders)
 
-    create_sample(dest_path, folders, imageset)
+#    create_sample(dest_path, folders, imageset)
 
-    create_sample_data(dest_path, folders)
+#    create_sample_data(dest_path, folders)
 
-    create_sample_annotation(dest_path, folders)
+#    create_sample_annotation(dest_path, folders)
 
-    get_lidars(sample_dest_path, folders)
+#    get_lidars(sample_dest_path, folders)
 
-    get_cameras(sample_dest_path, folders)
+#    get_cameras(sample_dest_path, folders)
 
-    test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
+#    test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
 
     get_standard_files(dest_path, nuscences_v1mini_path)
 
