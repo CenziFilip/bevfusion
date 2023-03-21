@@ -10,6 +10,7 @@ import math
 from transforms3d.euler import euler2quat, quat2euler
 from utils.bbox import project_boxes
 from nuscenes.utils import splits
+from random import shuffle
 
 wanted_sensors = ["LIDAR_TOP", "CAM_LEFT", "CAM_RIGHT", "CAM_BACK", "CAM_FRONT"] #"CAM_DESK", "CAM_FRONT_LEFT", "CAM_FRONT_RIGHT", "CAM_FRONT"]
 
@@ -364,8 +365,8 @@ def test_lidars(dest_path, nuscenes_path, sample_dest_path):
                 print(points)
                 print(scan)
                 return 
-                
-                
+
+
 def get_lidars(sample_dest_path, folders):
     print("Creating lidar files...")
     for fold in tqdm.tqdm(folders):
@@ -426,7 +427,8 @@ def get_standard_files(dest_path, nuscences_v1mini_path):
 
 def create_imagesets(dest_path, folders):
     #sample_per_scene = 100
-    scene_numbers = ['scene-0061', 'scene-0553', 'scene-0655', 'scene-0757', 'scene-0796', 'scene-1077', 'scene-1094', 'scene-1100', 'scene-0103', 'scene-0916']
+    scene_numbers = ['scene-0061', 'scene-0553', 'scene-0655', 'scene-0757', 'scene-0796', 'scene-1077',
+                     'scene-1094', 'scene-1100', 'scene-0103', 'scene-0916']
     train_scenes = splits.train
     val_scenes = splits.val
     #xscene_numbers = [*train_scenes,*val_scenes]
@@ -435,25 +437,66 @@ def create_imagesets(dest_path, folders):
     for fold in folders:
         count_files += len(glob.glob(fold + '/BBOX_LABELS/*.json'))
 
-    sample_per_scene = int(count_files/(len(scene_numbers))) + 1
+    print(count_files)
+    sample_per_scene = int(count_files/2/(len(scene_numbers)-2)) + 1
+    sample_per_scene_val = int(count_files/2/2) + 1
     print(sample_per_scene)
+    print(sample_per_scene_val)
     all_scene_json = []
     i = 0
+    all_labs = []
     for fold in folders:
         location = fold.split('/')[-1]
-        lab_files = []
+    #    print(location)
+    #    lab_files = []
         lab_list = glob.glob(fold + '/BBOX_LABELS/*.json')
-        num_lab = len(lab_list)
+    #    num_lab = len(lab_list)
         for ind, lab in enumerate(lab_list):
-            lab_name = lab.split('/')[-1].split('.')[0]
-            lab_files.append(lab_name)
-            if (i % sample_per_scene == 0 and i != 0) or (ind == num_lab - 1):
-                scene_json = {"Scene": scene, "Location": location, "files": lab_files}
-                all_scene_json.append(scene_json)
-                lab_files = []
+    #        lab_name = lab.split('/')[-1].split('.')[0]
+    #        lab_files.append(lab_name)
+            all_labs.append(lab)
+    #        if (i % sample_per_scene == 0 and i != 0) or (ind == num_lab - 1):
+    #            scene_json = {"Scene": scene, "Location": location, "files": lab_files}
+    #            all_scene_json.append(scene_json)
+    #            lab_files = []
 
-            scene = scene_numbers[int(i/sample_per_scene)]
-            i += 1
+    #        scene = scene_numbers[int(i/sample_per_scene)]
+    #        i += 1
+    shuffle(all_labs)
+    scene_number = 0
+    i = 0
+    lab_files = []
+    for ind, al in enumerate(all_labs):
+          lab_name = al.split('/')[-1].split('.')[0]
+          location = al.split('/')[-3]
+          lab_files.append(lab_name)
+          if (i % sample_per_scene == 0 and i != 0) and scene_number < 8:
+              scene_json = {"Scene": scene, "Location": location, "files": lab_files}
+              all_scene_json.append(scene_json)
+              #print("len lab:",len(lab_files))
+              #print("ind:",ind)
+              lab_files = []
+              scene_number += 1
+          if ((i % sample_per_scene_val == 0 and i != 0 and i != np.ceil(count_files/2)) or ind == len(all_labs)-1) and scene_number >= 8:
+              scene_json = {"Scene": scene, "Location": location, "files": lab_files}
+              all_scene_json.append(scene_json)
+              #print("len lab:",len(lab_files))
+              #print("ind:",ind)
+              lab_files = []
+              scene_number += 1
+          if len(all_labs)-1 == ind:
+              break
+          if scene_number < 8:
+              scene = scene_numbers[scene_number]
+              #print(int(i/sample_per_scene))
+          else:
+              scene = scene_numbers[scene_number]
+    #          print(int(i/sample_per_scene))
+          i += 1
+          if i == count_files/2:
+              i = 0
+    #      print(ind)
+    #     print(al)
     if os.path.exists(dest_path + '/imagesets.json'):
          os.remove(dest_path + '/imagesets.json')
     # save the json file
@@ -486,7 +529,7 @@ def main():
     if not os.path.exists(sample_dest_path):
         os.makedirs(sample_dest_path)
 
-    num_of_towns = 1
+    num_of_towns = 5
     folders = glob.glob(selma_path + "*")
     fol = []
     for fld in folders:
@@ -497,7 +540,7 @@ def main():
         if town_num <= num_of_towns: # and fld.split("/")[-1] == "Town01_Opt_ClearSunset": # for testing
             fol.append(fld)
     folders = fol
-    folders = folders[0:3] # for testing
+    #folders = folders[0:3] # for testing
 
     create_imagesets(selma_path, folders)
 
@@ -505,29 +548,29 @@ def main():
     with open(selma_path + '/imagesets.json') as f:
         imageset = json.load(f)
 
-#    create_calibrated_sensor(dest_path, folders)
+    create_calibrated_sensor(dest_path, folders)
 
-#    create_ego_pose(dest_path, folders)
+    create_ego_pose(dest_path, folders)
 
-#    create_instance(dest_path, folders)
+    create_instance(dest_path, folders)
 
-#    create_log(dest_path, folders)
+    create_log(dest_path, folders)
 
-#    create_scene(dest_path, folders, imageset)
+    create_scene(dest_path, folders, imageset)
 
-#    create_sensors(dest_path, folders)
+    create_sensors(dest_path, folders)
 
-#    create_sample(dest_path, folders, imageset)
+    create_sample(dest_path, folders, imageset)
 
-#    create_sample_data(dest_path, folders)
+    create_sample_data(dest_path, folders)
 
-#    create_sample_annotation(dest_path, folders)
+    create_sample_annotation(dest_path, folders)
 
-#    get_lidars(sample_dest_path, folders)
+    get_lidars(sample_dest_path, folders)
 
-#    get_cameras(sample_dest_path, folders)
+    get_cameras(sample_dest_path, folders)
 
-#    test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
+    test_lidars(dest_path, nuscences_v1mini_path, sample_dest_path)
 
     get_standard_files(dest_path, nuscences_v1mini_path)
 
